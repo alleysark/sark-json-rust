@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub struct JSonObject {
-    pub collection: HashMap<String, JSonValue>,
+pub struct JsonObject {
+    pub collection: HashMap<String, JsonValue>,
 }
 
 #[derive(Debug)]
-pub enum JSonValue {
+pub enum JsonValue {
     AsStr(String),
     AsInt(i32),
     AsFloat(f64),
-    AsObject(JSonObject),
-    AsArray(Vec<JSonValue>),
+    AsObject(JsonObject),
+    AsArray(Vec<JsonValue>),
     AsBool(bool),
     AsNull,
 }
