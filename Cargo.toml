@@ -1,0 +1,6 @@
+[package]
+name = "json_parser_test"
+version = "0.1.0"
+authors = ["alleysark <dev.alleysark@gmail.com>"]
+
+[dependencies]
