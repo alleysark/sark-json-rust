@@ -1,22 +1,10 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
-struct JSonObject {
-    collection: HashMap<String, JSonValue>,
-}
-
-#[derive(Debug)]
-enum JSonValue {
-    as_str(String),
-    as_int(i32),
-    as_float(f64),
-    as_obj(JSonObject),
-    as_arr(Vec<JSonValue>),
-    as_bool(bool),
-    as_null,
-}
+pub mod json_object;
 
 fn main() {
+    use json_object::*;
+    
     let mut inner_obj = JSonObject {
         collection: HashMap::new()
     };
