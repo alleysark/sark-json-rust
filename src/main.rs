@@ -1,19 +1,14 @@
-use std::collections::HashMap;
 
 pub mod json_object;
 
 fn main() {
     use json_object::*;
 
-    let mut inner_obj = JsonObject {
-        collection: HashMap::new()
-    };
+    let mut inner_obj = JsonObject::new();
     inner_obj.insert("field_1_1", JsonValue::AsInt(10));
     inner_obj.insert("field_1_2", JsonValue::AsFloat(3.14));
 
-    let mut doc = JsonObject {
-        collection: HashMap::new()
-    };
+    let mut doc = JsonObject::new();
     doc.insert("field_0", JsonValue::AsInt(10));
     doc.insert("inner_obj", JsonValue::AsObject(inner_obj));
 

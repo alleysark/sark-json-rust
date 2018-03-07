@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct JsonObject {
-    pub collection: HashMap<String, JsonValue>,
+    collection: HashMap<String, JsonValue>,
 }
 
 #[derive(Debug)]
@@ -17,6 +17,12 @@ pub enum JsonValue {
 }
 
 impl JsonObject {
+    pub fn new() -> JsonObject {
+        JsonObject {
+            collection: HashMap::new()
+        }
+    }
+
     pub fn get(&self, key: &str) -> Option<&JsonValue> {
         self.collection.get(key)
     }
