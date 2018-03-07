@@ -7,11 +7,11 @@ pub struct JSonObject {
 
 #[derive(Debug)]
 pub enum JSonValue {
-    as_str(String),
-    as_int(i32),
-    as_float(f64),
-    as_obj(JSonObject),
-    as_arr(Vec<JSonValue>),
-    as_bool(bool),
-    as_null,
+    AsStr(String),
+    AsInt(i32),
+    AsFloat(f64),
+    AsObject(JSonObject),
+    AsArray(Vec<JSonValue>),
+    AsBool(bool),
+    AsNull,
 }
