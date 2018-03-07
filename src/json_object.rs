@@ -36,3 +36,13 @@ impl JsonObject {
         self.collection.insert(String::from(name), val)
     }
 }
+
+macro_rules! json_obj (
+    { $($key:expr => $value:expr), * } => {{
+        let mut obj = JsonObject::new();
+        $(
+            obj.insert($key, $value);
+        )*
+        obj
+    }};
+);
