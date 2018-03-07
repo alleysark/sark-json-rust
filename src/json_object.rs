@@ -8,7 +8,7 @@ pub struct JsonObject {
 
 #[derive(Debug)]
 pub enum JsonValue {
-    AsStr(String),
+    AsString(String),
     AsInt(i32),
     AsFloat(f64),
     AsObject(JsonObject),
@@ -67,7 +67,7 @@ macro_rules! json_obj (
 impl Clone for JsonValue {
     fn clone(&self) -> JsonValue {
         match *self {
-            JsonValue::AsStr(ref s) => JsonValue::AsStr(s.clone()),
+            JsonValue::AsString(ref s) => JsonValue::AsString(s.clone()),
             JsonValue::AsInt(i) => JsonValue::AsInt(i),
             JsonValue::AsFloat(f) => JsonValue::AsFloat(f),
             JsonValue::AsObject(ref obj) => JsonValue::AsObject(obj.clone()),
@@ -81,7 +81,7 @@ impl Clone for JsonValue {
 // ----- impl JsonValue From trait -----
 impl<'a> From<&'a str> for JsonValue {
     fn from(s: &'a str) -> Self {
-        JsonValue::AsStr(String::from(s))
+        JsonValue::AsString(String::from(s))
     }
 }
 impl From<i32> for JsonValue {
