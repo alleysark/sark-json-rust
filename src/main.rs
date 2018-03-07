@@ -19,8 +19,16 @@ enum JSonValue {
 fn main() {
     let obj = JSonObject {
         name: String::from("field_name"),
-        value: Box::new(JSonValue::as_int(10)),
+        value: Box::new(JSonValue::as_obj(Box::new(
+            JSonObject {
+                name: String::from("inner_field_name"),
+                value: Box::new(JSonValue::as_arr(vec![
+                    JSonValue::as_int(10),
+                    JSonValue::as_float(3.14),
+                ])),
+            }
+        ))),
     };
 
-    println!("{:?}", obj);
+    println!("{:#?}", obj);
 }
