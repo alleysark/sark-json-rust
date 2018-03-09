@@ -68,6 +68,7 @@ macro_rules! json_obj (
     }
 );
 
+#[macro_export]
 macro_rules! json_arr (
     ( $elem:expr; $n:expr ) => {
         std::vec::from_elem(JsonValue::from($elem), $n)
@@ -98,6 +99,16 @@ impl Clone for JsonValue {
 }
 
 // ----- impl JsonValue From trait -----
+impl<'a> From<&'a String> for JsonValue {
+    fn from(src: &'a String) -> Self {
+        JsonValue::AsString(src.clone())
+    }
+}
+impl From<String> for JsonValue {
+    fn from(src: String) -> Self {
+        JsonValue::AsString(src)
+    }
+}
 impl<'a> From<&'a str> for JsonValue {
     fn from(s: &'a str) -> Self {
         JsonValue::AsString(String::from(s))
