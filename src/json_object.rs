@@ -53,14 +53,33 @@ impl Clone for JsonObject {
 }
 
 // ----- define JsonObject construction macro -----
+#[macro_export]
 macro_rules! json_obj (
     { $($key:expr => $value:expr), * } => {{
         let mut obj = JsonObject::new();
         $(
-            obj.insert($key, $value);
+            obj.insert($key, JsonValue::from($value));
         )*
         obj
     }};
+
+    { $($key:expr => $value:expr,) * } => {
+        json_obj!{ $($key => $value), * }
+    }
+);
+
+macro_rules! json_arr (
+    ( $elem:expr; $n:expr ) => {
+        std::vec::from_elem(JsonValue::from($elem), $n)
+    };
+    
+    ( $($x:expr), * ) => {
+        <[_]>::into_vec(std::boxed::Box::new([$(JsonValue::from($x)), *]))
+    };
+    
+    ( $($x:expr,) * ) => {
+        json_arr![$($x), *]
+    }
 );
 
 // ----- impl JsonValue Clone trait -----

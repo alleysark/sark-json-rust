@@ -20,16 +20,16 @@ fn main() {
 
     // using macro
     let obj = json_obj!{
-        "age" => JsonValue::from(28),
-        "favorites" => JsonValue::from(vec![
-            JsonValue::from(json_obj!{
-                "type" => JsonValue::from("color"),
-                "target" => JsonValue::from("violet")
-            }),
-            JsonValue::from(0.1),
-            JsonValue::from(0.2),
-            JsonValue::from(0.3),
-        ])
+        "age" => 28,
+        "favorites" => json_arr![
+            json_obj!{
+                "type" => "color",
+                "target" => "violet"
+            },
+            1,
+            0.2e+1,
+            "3",
+        ],
     };
     println!("obj: {:#?}", obj);
 
