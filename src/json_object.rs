@@ -103,6 +103,11 @@ impl<'a> From<&'a str> for JsonValue {
         JsonValue::AsString(String::from(s))
     }
 }
+impl From<char> for JsonValue {
+    fn from(c: char) -> Self {
+        JsonValue::AsString(c.to_string())
+    }
+}
 impl From<i32> for JsonValue {
     fn from(i: i32) -> Self {
         JsonValue::AsInt(i)
