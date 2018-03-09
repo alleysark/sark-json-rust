@@ -1,0 +1,24 @@
+{
+    "string": "value",
+    "num_integer": 10,
+    "num_float": 1.23,
+    "object": {
+        "inner_obj": {
+            "name": "value"
+        },
+        "key" : 10,
+    },
+    
+    "array": [ 1, 2, 3 ],
+    "diff-type array": [
+        "str", 100, 3.14, 
+        {
+            "obj": "in-array"
+        },
+        [ 1, 2, 3],
+        true
+    ],
+
+    "bool": true,
+    "null": null
+}
