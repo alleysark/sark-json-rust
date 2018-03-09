@@ -2,6 +2,8 @@
 #[macro_use]
 pub mod json_object;
 
+pub mod json_parser;
+
 fn main() {
     use json_object::*;
 
