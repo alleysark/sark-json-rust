@@ -2,6 +2,7 @@ use std::io;
 use std::io::Read;
 use std::fs::File;
 use std::str::Chars;
+use std::char;
 use std::iter::Peekable;
 use json_object::*;
 
@@ -148,5 +149,101 @@ fn parse_number_digits_with_leading_zeros(pk_ch: &mut Peekable<&mut Chars>) -> O
     }
     else {
         None
+    }
+}
+
+
+// ----- parse string -----
+// iter must be located at the opening double-quote
+fn parse_string(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonValue, &'static str> {
+    let mut result_str = String::with_capacity(256);
+    let mut is_opened = false;
+
+    loop {
+        let c = pk_ch.peek().map_or('\x00', |c| *c);
+        match c {
+            '\"' => {
+                if is_opened {
+                    // end of parsing
+                    break;
+                }
+                else {
+                    is_opened = true;
+                    pk_ch.next();
+                }
+            },
+            '\\' => {
+                pk_ch.next();
+                if let Some(c) = parse_string_escape_letter(pk_ch) {
+                    result_str.push(c);
+                }
+                else {
+                    return Err("parse-string: failed to parse escape letter");
+                }
+            },
+            '\x00' => {
+                return Err("parse-string: invalid character")
+            },
+            _ => {
+                result_str.push(c);
+                pk_ch.next();
+            }
+        }
+    }
+
+    Ok(JsonValue::from(result_str))
+}
+
+fn parse_string_escape_letter(pk_ch: &mut Peekable<&mut Chars>) -> Option<char> {
+    let c = pk_ch.peek().map_or('\x00', |c| *c);
+    match c {
+        '\"' => {
+            pk_ch.next();
+            return Some('\"');
+        },
+        '\\' => {
+            pk_ch.next();
+            return Some('\\');
+        },
+        '/' => {
+            pk_ch.next();
+            return Some('/');
+        },
+        'b' => {
+            pk_ch.next();
+            return Some('\x08');
+        },
+        'f' => {
+            pk_ch.next();
+            return Some('\x0C');
+        },
+        'n' => {
+            pk_ch.next();
+            return Some('\n');
+        },
+        'r' => {
+            pk_ch.next();
+            return Some('\r');
+        },
+        't' => {
+            pk_ch.next();
+            return Some('\t');
+        },
+        'u' => {
+            let mut digits: u32 = 0;
+            pk_ch.next();
+            for _x in 0..4 {
+                if pk_ch.peek().map_or(false, |c| c.is_digit(16)) {
+                    let d = pk_ch.next().unwrap();
+                    digits = digits * 16 + d.to_digit(16).unwrap();
+                }
+                else {
+                    // escape letter u must be followed by 4 digits
+                    return None;
+                }
+            }
+            return char::from_u32(digits);
+        },
+        _ => return None,
     }
 }
