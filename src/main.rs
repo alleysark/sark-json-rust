@@ -37,4 +37,8 @@ fn main() {
 
     let cloned_obj = obj.clone();
     println!("cloned_obj: {:#?}", cloned_obj);
+
+    println!("--- test json parser ---");
+    let obj = json_parser::parse("./tests/test.json").expect("failed to parse");
+    println!("parsed obj: {:#?}", obj);
 }
