@@ -20,6 +20,137 @@ pub fn parse(file_name: &str) -> Result<JsonObject, io::Error> {
     })
 }
 
+// ----- parse json object -----
+fn parse_json_object(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonObject, &'static str> {
+    let mut result_obj = JsonObject::new();
+    let mut is_opened = false;
+    let mut key_str = String::with_capacity(64);
+    let mut value: Option<JsonValue> = None;
+
+    loop {
+        let c = pk_ch.peek().map_or('\x00', |c| *c);
+        match c {
+            '{' => {
+                if is_opened {
+                    return Err("parse-json-object: opening bracket is appeared twice.");
+                }
+                is_opened = true;
+                pk_ch.next();
+            },
+            '}' => {
+                if !is_opened {
+                    return Err("parse-json-object: closing bracket is appeared without opening bracket.");
+                }
+                pk_ch.next();
+                break;
+            },
+            '\"' => {
+                if !key_str.is_empty() {
+                    return Err("parse-json-object: invalid double quote in here.")
+                }
+
+                // parse string and keep it (do not move the iter to next)
+                key_str = parse_string(pk_ch)?;
+            },
+            ':' => {
+                if key_str.is_empty() {
+                    return Err("parse-json-object: key-value separator is appeared without key string.");
+                }
+                if value.is_some() {
+                    return Err("parse-json-object: key-value separator is appeared twice.");
+                }
+
+                pk_ch.next();
+                value = Some(parse_json_value(pk_ch)?);
+            },
+            ',' => {
+                if key_str.is_empty() || value.is_none() {
+                    return Err("parse-json-object: member separator is appeared without valid key-value pair.");
+                }
+
+                // insert key-value pair
+                result_obj.insert(&key_str, value.unwrap_or(JsonValue::AsNull));
+
+                // empty the key-value for next member
+                key_str = String::with_capacity(64);
+                value = None;
+            },
+            // white-space
+            ' ' | '\t' | '\n' | '\r' => {
+                pk_ch.next();
+            },
+            _ => {
+                return Err("parse-json-object: invalid character!");
+            },
+        }
+    }
+
+    Ok(result_obj)
+}
+
+// ----- parse json value -----
+fn parse_json_value(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonValue, &'static str> {
+
+    loop {
+        let c = pk_ch.peek().map_or('\x00', |c| *c);
+        match c {
+            // object
+            '{' => {
+                let jval_obj = parse_json_object(pk_ch)?;
+                return Ok(JsonValue::from(jval_obj));
+            },
+            // array
+            '[' => {
+                panic!("parse-array is not implemented yet!");
+            },
+            // string
+            '\"' => {
+                let jval_str = parse_string(pk_ch)?;
+                return Ok(JsonValue::from(jval_str));
+            },
+            // number
+            '0' ... '9' | '-' | '+' => {
+                let jval_num = parse_number(pk_ch)?;
+                return Ok(jval_num);
+            },
+            't' => {
+                // try to parse true
+                if try_parse_keyword(pk_ch, "true") {
+                    return Ok(JsonValue::AsBool(true));
+                }
+                else {
+                    return Err("parse-value: invalid json value. did you mean true?");
+                }
+            },
+            'f' => {
+                // try to parse false
+                if try_parse_keyword(pk_ch, "false") {
+                    return Ok(JsonValue::AsBool(false));
+                }
+                else {
+                    return Err("parse-value: invalid json value. did you mean false?");
+                }
+            },
+            'n' => {
+                // try to parse null
+                if try_parse_keyword(pk_ch, "null") {
+                    return Ok(JsonValue::AsNull);
+                }
+                else {
+                    return Err("parse-value: invalid json value. did you mean null?");
+                }
+            },
+            // white-space
+            ' ' | '\t' | '\n' | '\r' => {
+                pk_ch.next();
+            },
+             _ => {
+                return Err("parse-json-object: invalid character!");
+            },
+        }
+    }
+}
+
 // ----- parse number -----
 enum JsonParseNumberStage {
     Sign,
@@ -152,6 +283,17 @@ fn parse_number_digits_with_leading_zeros(pk_ch: &mut Peekable<&mut Chars>) -> O
     }
 }
 
+// ----- try to parse keyword -----
+// it consumes given iterator
+fn try_parse_keyword(pk_ch: &mut Peekable<&mut Chars>, keyword: &'static str) -> bool {
+    for ref c in keyword.chars() {
+        if c != pk_ch.peek().unwrap_or(&'\x00') {
+            return false;
+        }
+        pk_ch.next();
+    }
+    true
+}
 
 // ----- parse string -----
 // iter must be located at the opening double-quote
@@ -163,13 +305,15 @@ fn parse_string(pk_ch: &mut Peekable<&mut Chars>) -> Result<String, &'static str
         let c = pk_ch.peek().map_or('\x00', |c| *c);
         match c {
             '\"' => {
+                // consume opening and closing d-quote properly
+                pk_ch.next();
+
                 if is_opened {
                     // end of parsing
                     break;
                 }
                 else {
                     is_opened = true;
-                    pk_ch.next();
                 }
             },
             '\\' => {
