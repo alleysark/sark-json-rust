@@ -29,7 +29,7 @@ fn parse_json_object(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonObject, &'s
     let mut result_obj = JsonObject::new();
     let mut is_opened = false;
     let mut key_str = String::with_capacity(64);
-    let mut value: Option<JsonValue> = None;
+    let mut has_next_pair = false;
 
     loop {
         let c = pk_ch.peek().map_or('\x00', |c| *c);
@@ -45,6 +45,13 @@ fn parse_json_object(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonObject, &'s
                 if !is_opened {
                     return Err("parse-json-object: closing curly brace is appeared without opening brace.");
                 }
+                if has_next_pair {
+                    return Err("parse-json-object: there is comma separator without valid key-value pair.");
+                }
+                if !key_str.is_empty() {
+                    return Err("parse-json-object: there is incomplete key-value pair.");
+                }
+
                 pk_ch.next();
                 break;
             },
@@ -60,25 +67,23 @@ fn parse_json_object(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonObject, &'s
                 if key_str.is_empty() {
                     return Err("parse-json-object: key-value separator is appeared without key string.");
                 }
-                if value.is_some() {
-                    return Err("parse-json-object: key-value separator is appeared twice.");
-                }
 
+                // parse json value
                 pk_ch.next();
-                value = Some(parse_json_value(pk_ch)?);
+                let jval = parse_json_value(pk_ch)?;
+                
+                // insert key-value pair
+                result_obj.insert(&key_str, jval);
+
+                // empty the key str
+                key_str = String::with_capacity(64);
+                has_next_pair = false;
             },
             ',' => {
-                if key_str.is_empty() || value.is_none() {
-                    return Err("parse-json-object: member separator is appeared without valid key-value pair.");
+                if has_next_pair {
+                   return Err("parse-json-object: comma separator is appeared twice.");
                 }
-
-                // insert key-value pair
-                result_obj.insert(&key_str, value.unwrap_or(JsonValue::AsNull));
-
-                // empty the key-value for next member
-                key_str = String::with_capacity(64);
-                value = None;
-
+                has_next_pair = true;
                 pk_ch.next();
             },
             // white-space
@@ -126,11 +131,11 @@ fn parse_json_array(pk_ch: &mut Peekable<&mut Chars>) -> Result<Vec<JsonValue>, 
                 break;
             },
             ',' => {
-               if has_next_value {
+                if has_next_value {
                    return Err("parse-json-array: comma separator is appeared twice.");
-               }
-               has_next_value = true;
-               pk_ch.next();
+                }
+                has_next_value = true;
+                pk_ch.next();
             },
             // white-space
             ' ' | '\t' | '\n' | '\r' => {
