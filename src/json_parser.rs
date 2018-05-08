@@ -155,7 +155,7 @@ fn parse_number_digits_with_leading_zeros(pk_ch: &mut Peekable<&mut Chars>) -> O
 
 // ----- parse string -----
 // iter must be located at the opening double-quote
-fn parse_string(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonValue, &'static str> {
+fn parse_string(pk_ch: &mut Peekable<&mut Chars>) -> Result<String, &'static str> {
     let mut result_str = String::with_capacity(256);
     let mut is_opened = false;
 
@@ -191,7 +191,7 @@ fn parse_string(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonValue, &'static 
         }
     }
 
-    Ok(JsonValue::from(result_str))
+    Ok(result_str)
 }
 
 fn parse_string_escape_letter(pk_ch: &mut Peekable<&mut Chars>) -> Option<char> {
