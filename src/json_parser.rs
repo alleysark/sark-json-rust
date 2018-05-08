@@ -1,4 +1,3 @@
-use std::io;
 use std::io::Read;
 use std::fs::File;
 use std::str::Chars;
@@ -6,18 +5,23 @@ use std::char;
 use std::iter::Peekable;
 use json_object::*;
 
-pub fn parse(file_name: &str) -> Result<JsonObject, io::Error> {
-    let mut f = File::open(file_name)?;
+pub fn parse(file_name: &str) -> Result<JsonObject, &'static str> {
+    let f = File::open(file_name);
+    let mut f = match f {
+        Ok(file) => file,
+        Err(_e) => {
+            return Err("parse: there was a problem opening the file.");
+        }
+    };
 
     let mut json_str = String::new();
-    f.read_to_string(&mut json_str)?;
+    let res = f.read_to_string(&mut json_str);
+    if res.is_err() {
+        return Err("parse: failed to read json string.");
+    }
 
-    println!("json_str: {}", json_str);
-
-    Ok(json_obj!{
-        "filename" => file_name,
-        "content" => json_str,
-    })
+    let jobj = parse_json_object(&mut json_str.chars().by_ref().peekable())?;
+    Ok(jobj)
 }
 
 // ----- parse json object -----
@@ -74,6 +78,8 @@ fn parse_json_object(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonObject, &'s
                 // empty the key-value for next member
                 key_str = String::with_capacity(64);
                 value = None;
+
+                pk_ch.next();
             },
             // white-space
             ' ' | '\t' | '\n' | '\r' => {
@@ -99,10 +105,14 @@ fn parse_json_array(pk_ch: &mut Peekable<&mut Chars>) -> Result<Vec<JsonValue>, 
         match c {
             '[' => {
                 if is_opened {
-                    return Err("parse-json-array: opening bracket is appeared twice.");
+                    let jval_arr = parse_json_array(pk_ch)?;
+                    result_arr.push(JsonValue::from(jval_arr));
+                    has_next_value = false;
                 }
-                is_opened = true;
-                pk_ch.next();
+                else {
+                    is_opened = true;
+                    pk_ch.next();
+                }
             },
             ']' => {
                 if !is_opened {
