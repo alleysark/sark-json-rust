@@ -6,7 +6,7 @@
         "inner_obj": {
             "name": "value"
         },
-        "key" : 10,
+        "key" : 10
     },
     
     "array": [ 1, 2, 3 ],
