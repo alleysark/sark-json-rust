@@ -32,14 +32,14 @@ fn parse_json_object(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonObject, &'s
         match c {
             '{' => {
                 if is_opened {
-                    return Err("parse-json-object: opening bracket is appeared twice.");
+                    return Err("parse-json-object: opening curly brace is appeared twice.");
                 }
                 is_opened = true;
                 pk_ch.next();
             },
             '}' => {
                 if !is_opened {
-                    return Err("parse-json-object: closing bracket is appeared without opening bracket.");
+                    return Err("parse-json-object: closing curly brace is appeared without opening brace.");
                 }
                 pk_ch.next();
                 break;
@@ -88,6 +88,55 @@ fn parse_json_object(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonObject, &'s
     Ok(result_obj)
 }
 
+// ----- parse json array -----
+fn parse_json_array(pk_ch: &mut Peekable<&mut Chars>) -> Result<Vec<JsonValue>, &'static str> {
+    let mut result_arr: Vec<JsonValue> = Vec::new();
+    let mut is_opened = false;
+    let mut has_next_value = false;
+
+    loop {
+        let c = pk_ch.peek().map_or('\x00', |c| *c);
+        match c {
+            '[' => {
+                if is_opened {
+                    return Err("parse-json-array: opening bracket is appeared twice.");
+                }
+                is_opened = true;
+                pk_ch.next();
+            },
+            ']' => {
+                if !is_opened {
+                    return Err("parse-json-array: closing bracket is appeared without opening bracket.");
+                }
+                if has_next_value {
+                    return Err("parse-json-array: there is comma separator without value.");
+                }
+
+                pk_ch.next();
+                break;
+            },
+            ',' => {
+               if has_next_value {
+                   return Err("parse-json-array: comma separator is appeared twice.");
+               }
+               has_next_value = true;
+               pk_ch.next();
+            },
+            // white-space
+            ' ' | '\t' | '\n' | '\r' => {
+                pk_ch.next();
+            },
+            _ => {
+                let jval = parse_json_value(pk_ch)?;
+                result_arr.push(jval);
+                has_next_value = false;
+            },
+        }
+    }
+
+    Ok(result_arr)
+}
+
 // ----- parse json value -----
 fn parse_json_value(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonValue, &'static str> {
 
@@ -101,7 +150,8 @@ fn parse_json_value(pk_ch: &mut Peekable<&mut Chars>) -> Result<JsonValue, &'sta
             },
             // array
             '[' => {
-                panic!("parse-array is not implemented yet!");
+                let jval_arr = parse_json_array(pk_ch)?;
+                return Ok(JsonValue::from(jval_arr));
             },
             // string
             '\"' => {
